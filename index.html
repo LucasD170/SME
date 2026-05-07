@@ -573,24 +573,22 @@
       `;
     }
 
-    function renderTable({ rows }) {
+    function renderTable({ rows, inputs }) {
       const table = document.getElementById('resultsTable');
+      const years = inputs.duration;
       table.innerHTML = `
         <thead>
           <tr>
             <th>Énergie</th>
-            <th>Coût chantier HT après neutralisation</th>
-            <th>Conso projet</th>
+            <th>Coût de chantier HTVA</th>
+            <th>OPEX annuel HTVA</th>
             <th>Équivalent énergie</th>
-            <th>Prix énergie</th>
-            <th>Taxes</th>
-            <th>OPEX annuel</th>
-            <th>Prix au kWh exploitation 20 ans</th>
-            <th>1ère année avec chantier</th>
-            <th>Budget 20 ans</th>
-            <th>Coût complet kWh 20 ans</th>
-            <th>Rejet CO₂ unitaire</th>
-            <th>Rejet tCO₂/an</th>
+            <th>Prix carbone EU ETS sur ${years} ans</th>
+            <th>Coût d'exploitation HTVA sur ${years} ans</th>
+            <th>Prix au kWh exploitation HTVA sur ${years} ans</th>
+            <th>1ère année avec coût du chantier HTVA</th>
+            <th>Budget sur ${years} ans</th>
+            <th>Rejet en t éq. CO₂/an</th>
           </tr>
         </thead>
         <tbody>
@@ -598,17 +596,14 @@
             <tr class="${i === 0 ? 'best' : ''}">
               <td><strong>${r.name}</strong></td>
               <td>${euro(r.capex)}</td>
-              <td>${number(r.usefulKwh)} kWh/an</td>
-              <td>${number(r.quantity, 2)} ${r.unit}/an</td>
-              <td>${number(r.price, 3)} ${r.priceUnit}</td>
-              <td>${number(r.tax, 3)} ${r.taxUnit}</td>
               <td>${euro(r.opexBase)}/an</td>
+              <td>${number(r.quantity, 2)} ${r.unit}/an</td>
+              <td>${euro(r.carbon20)}</td>
+              <td>${euro(r.energy20 + r.tax20 + r.carbon20 + r.opex20)}</td>
               <td>${number(r.exploitationKwh, 3)} €/kWh</td>
               <td>${euro(r.firstYear)}</td>
               <td><strong>${euro(r.total20)}</strong></td>
-              <td><strong>${number(r.costPerKwh, 3)} €/kWh</strong></td>
-              <td>${number(energies[r.key].emission, 4)} kgCO₂/kWh</td>
-              <td>${number(r.emissionsT, 1)} tCO₂/an</td>
+              <td>${number(r.emissionsT, 1)}</td>
             </tr>
           `).join('')}
         </tbody>
