@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comparatif énergies sur 20 ans</title>
+  <title>Comparatif énergies</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
@@ -243,7 +243,7 @@
     <div class="brand-header">
       <img src="Logo_Antargaz_Energies.png" alt="Antargaz énergies" class="brand-logo" />
       <div>
-        <h1>Comparatif énergies sur 20 ans</h1>
+        <h1>Comparatif énergies</h1>
         <p class="subtitle">Outil simplifié pour comparer Fioul domestique, GPL, BioGPL, Électricité PAC, Biomasse granulés et Géothermie-élec selon le coût global, les émissions CO₂ et les hypothèses d’évolution.</p>
       </div>
     </div>
@@ -296,7 +296,7 @@
         </div>
       </div>
 
-      <h3>Prix des énergies modifiables</h3>
+      <h3>Prix des énergies</h3>
       <div class="energy-prices" id="energyPrices"></div>
       <button id="resetBtn" class="secondary">Réinitialiser les valeurs</button>
     </section>
@@ -575,7 +575,6 @@
 
     function renderTable({ rows, inputs }) {
       const table = document.getElementById('resultsTable');
-      const years = inputs.duration;
       table.innerHTML = `
         <thead>
           <tr>
@@ -583,11 +582,12 @@
             <th>Coût de chantier HTVA</th>
             <th>OPEX annuel HTVA</th>
             <th>Équivalent énergie</th>
-            <th>Prix carbone EU ETS sur ${years} ans</th>
-            <th>Coût d'exploitation HTVA sur ${years} ans</th>
-            <th>Prix au kWh exploitation HTVA sur ${years} ans</th>
+            <th>Prix carbone EU ETS</th>
+            <th>Coût d'exploitation HTVA</th>
+            <th>Prix au kWh exploitation</th>
             <th>1ère année avec coût du chantier HTVA</th>
-            <th>Budget sur ${years} ans</th>
+            <th>Budget</th>
+            <th>Coût complet kWh</th>
             <th>Rejet en t éq. CO₂/an</th>
           </tr>
         </thead>
@@ -603,6 +603,7 @@
               <td>${number(r.exploitationKwh, 3)} €/kWh</td>
               <td>${euro(r.firstYear)}</td>
               <td><strong>${euro(r.total20)}</strong></td>
+              <td><strong>${number(r.costPerKwh, 3)} €/kWh</strong></td>
               <td>${number(r.emissionsT, 1)}</td>
             </tr>
           `).join('')}
