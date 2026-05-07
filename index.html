@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparatif énergies sur 20 ans</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --good: #15803d;
+      --bad: #b91c1c;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 28px 22px 18px;
+      max-width: 1280px;
+      margin: auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 1280px;
+      margin: auto;
+      padding: 0 22px 40px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 980px) {
+      .grid-4, .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .card h2 {
+      font-size: 19px;
+      margin: 0 0 14px;
+    }
+
+    .card h3 {
+      font-size: 15px;
+      margin: 18px 0 10px;
+      color: var(--text);
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 15px;
+      color: var(--text);
+      background: white;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .field { margin-bottom: 12px; }
+
+    .energy-prices {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .energy-prices { grid-template-columns: 1fr; }
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary {
+      background: #eef2ff;
+      color: #1e3a8a;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    @media (max-width: 980px) { .summary { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .summary { grid-template-columns: 1fr; } }
+
+    .kpi {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .kpi .label { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .kpi .value { font-size: 24px; font-weight: 800; }
+    .kpi .small { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1050px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 10px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+    th { background: #f8fafc; color: #334155; font-size: 13px; }
+    tr.best { background: #ecfdf5; }
+
+    .muted { color: var(--muted); }
+    .hidden { display: none; }
+
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 980px) { .charts { grid-template-columns: 1fr; } }
+
+    canvas { width: 100% !important; height: 360px !important; }
+
+    .note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px 22px;
+    }
+
+    .brand-logo {
+      width: 220px;
+      max-width: 38vw;
+      height: auto;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 700px) {
+      .brand-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .brand-logo {
+        width: 190px;
+        max-width: 80vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand-header">
+      <img src="Logo_Antargaz_Energies.png" alt="Antargaz énergies" class="brand-logo" />
+      <div>
+        <h1>Comparatif énergies sur 20 ans</h1>
+        <p class="subtitle">Outil simplifié pour comparer Fioul domestique, GPL, BioGPL, Électricité PAC, Biomasse granulés et Géothermie-élec selon le coût global, les émissions CO₂ et les hypothèses d’évolution.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Variables d’entrée</h2>
+      <div class="grid grid-4">
+        <div class="field">
+          <label for="projectSize">Taille du projet</label>
+          <select id="projectSize"></select>
+        </div>
+        <div class="field">
+          <label for="carbonStart">Prix carbone EU ETS initial — €/tCO₂</label>
+          <input id="carbonStart" type="number" value="72" step="1" />
+        </div>
+        <div class="field">
+          <label for="carbonVariation">Variation carbone annuelle — €/tCO₂/an</label>
+          <select id="carbonVariation">
+            <option value="0">0</option>
+            <option value="10">+10</option>
+            <option value="20">+20</option>
+            <option value="30">+30</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="opexInflation">Inflation CAPEX/OPEX</label>
+          <select id="opexInflation">
+            <option value="0.01">1 %/an</option>
+            <option value="0.02" selected>2 %/an</option>
+            <option value="0.03">3 %/an</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="field">
+          <label for="taxScenario">Taxes sur la consommation</label>
+          <select id="taxScenario">
+            <option value="statusQuo">1 - Statut quo</option>
+            <option value="inflation">2 - Corrélé inflation</option>
+            <option value="carbonPressure">3 - Pression sur carboné</option>
+            <option value="mix" selected>4 - Mix Inflation / Carboné</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="duration">Durée d’étude — années</label>
+          <input id="duration" type="number" value="20" min="1" step="1" />
+        </div>
+      </div>
+
+      <h3>Prix des énergies modifiables</h3>
+      <div class="energy-prices" id="energyPrices"></div>
+      <button id="resetBtn" class="secondary">Réinitialiser les valeurs</button>
+    </section>
+
+    <section class="summary" id="summary"></section>
+
+    <section class="card">
+      <h2>2. Résultats comparatifs</h2>
+      <div class="table-wrap">
+        <table id="resultsTable"></table>
+      </div>
+      <p class="note">La ligne verte correspond à l’énergie la moins coûteuse sur la période sélectionnée. Les coûts sont indiqués HTVA / HTT selon les hypothèses fournies.</p>
+    </section>
+
+    <section class="charts">
+      <div class="card">
+        <h2>Budget total sur la période</h2>
+        <canvas id="budgetChart"></canvas>
+      </div>
+      <div class="card">
+        <h2>Émissions CO₂ annuelles</h2>
+        <canvas id="co2Chart"></canvas>
+      </div>
+      <div class="card">
+        <h2>Coût complet au kWh utile</h2>
+        <canvas id="kwhChart"></canvas>
+      </div>
+      <div class="card">
+        <h2>Évolution cumulée des coûts</h2>
+        <canvas id="cumulativeChart"></canvas>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px;">
+      <button id="toggleHypotheses" class="secondary">Afficher les hypothèses détaillées</button>
+      <div id="hypotheses" class="hidden">
+        <h2 style="margin-top:18px;">3. Hypothèses et données utilisées</h2>
+        <div class="table-wrap">
+          <table id="hypothesesTable"></table>
+        </div>
+        <p class="note">Géothermie-élec est disponible uniquement pour le projet 60 MWh. Pour les projets 150 MWh et 350 MWh, elle est automatiquement exclue du comparatif.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const projectData = {
+      "60": { label: "Projet 60 MWh", usefulKwh: 60000 },
+      "150": { label: "Projet 150 MWh", usefulKwh: 150000 },
+      "350": { label: "Projet 350 MWh", usefulKwh: 350000 }
+    };
+
+    const energies = {
+      fioul: {
+        name: "Fioul domestique", unit: "L", priceUnit: "€/L", price: 0.930,
+        efficiency: 0.90, conversionKwhPerUnit: 10, emission: 0.314,
+        tax: { unit: "€/L", value: 0.164 }, type: "carbon",
+        capex: { "60": 12754, "150": 46983, "350": 56380 },
+        opex: { "60": 300, "150": 1285, "350": 2825 },
+        available: { "60": true, "150": true, "350": true }
+      },
+      gpl: {
+        name: "GPL", unit: "t", priceUnit: "€/t", price: 900,
+        efficiency: 1.06, conversionKwhPerUnit: 13800, emission: 0.270,
+        tax: { unit: "€/t", value: 76 }, type: "carbon",
+        capex: { "60": 11402, "150": 60319, "350": 54321 },
+        opex: { "60": 325, "150": 1310, "350": 2850 },
+        available: { "60": true, "150": true, "350": true }
+      },
+      biogpl: {
+        name: "BioGPL", unit: "t", priceUnit: "€/t", price: 1650,
+        efficiency: 1.06, conversionKwhPerUnit: 13800, emission: 0.0702,
+        tax: { unit: "€/t", value: 76 }, type: "nonCarbon",
+        capex: { "60": 11402, "150": 60319, "350": 54321 },
+        opex: { "60": 325, "150": 1310, "350": 2850 },
+        available: { "60": true, "150": true, "350": true }
+      },
+      pac: {
+        name: "Électricité PAC", unit: "MWh", priceUnit: "€/MWh", price: 176,
+        efficiency: 2.5, conversionKwhPerUnit: 1000, emission: 0.079,
+        tax: { unit: "€/MWh", value: 26.58 }, type: "nonCarbon",
+        capex: { "60": 33850, "150": 115014, "350": 184890 },
+        opex: { "60": 628, "150": 5649, "350": 7289 },
+        available: { "60": true, "150": true, "350": true }
+      },
+      biomasse: {
+        name: "Biomasse granulés", unit: "t", priceUnit: "€/t", price: 308,
+        efficiency: 0.90, conversionKwhPerUnit: 4600, emission: 0.027,
+        tax: { unit: "€/t", value: 0 }, type: "nonCarbon",
+        capex: { "60": 26296, "150": 160468, "350": 319926 },
+        opex: { "60": 388, "150": 3120, "350": 9020 },
+        available: { "60": true, "150": true, "350": true }
+      },
+      geothermie: {
+        name: "Géothermie - élec", unit: "MWh", priceUnit: "€/MWh", price: 176,
+        efficiency: 3.5, conversionKwhPerUnit: 1000, emission: 0.079,
+        tax: { unit: "€/MWh", value: 33.70 }, type: "nonCarbon",
+        capex: { "60": 46610, "150": null, "350": null },
+        opex: { "60": 607, "150": null, "350": null },
+        available: { "60": true, "150": false, "350": false }
+      }
+    };
+
+    const taxScenarioRates = {
+      statusQuo: { carbon: 0, nonCarbon: 0 },
+      inflation: { carbon: 0.01, nonCarbon: 0.01 },
+      carbonPressure: { carbon: 0.05, nonCarbon: 0 },
+      mix: { carbon: 0.05, nonCarbon: 0.01 }
+    };
+
+    let charts = {};
+
+    function euro(value) {
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value || 0);
+    }
+
+    function number(value, digits = 0) {
+      return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: digits }).format(value || 0);
+    }
+
+    function init() {
+      const projectSelect = document.getElementById('projectSize');
+      Object.entries(projectData).forEach(([key, p]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${p.label} — ${number(p.usefulKwh)} kWh/an`;
+        projectSelect.appendChild(option);
+      });
+      projectSelect.value = "350";
+
+      renderEnergyPriceInputs();
+      bindEvents();
+      calculateAndRender();
+    }
+
+    function renderEnergyPriceInputs() {
+      const container = document.getElementById('energyPrices');
+      container.innerHTML = '';
+      Object.entries(energies).forEach(([key, e]) => {
+        const div = document.createElement('div');
+        div.className = 'field';
+        div.innerHTML = `
+          <label>${e.name} — ${e.priceUnit}</label>
+          <input type="number" step="0.001" data-price-key="${key}" value="${e.price}" />
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', calculateAndRender);
+        el.addEventListener('change', calculateAndRender);
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        Object.values(energies).forEach(e => e.price = e.defaultPrice || e.price);
+        document.getElementById('carbonStart').value = 72;
+        document.getElementById('carbonVariation').value = 0;
+        document.getElementById('opexInflation').value = 0.02;
+        document.getElementById('taxScenario').value = 'mix';
+        renderEnergyPriceInputs();
+        bindEvents();
+        calculateAndRender();
+      });
+
+      document.getElementById('toggleHypotheses').addEventListener('click', () => {
+        const block = document.getElementById('hypotheses');
+        const btn = document.getElementById('toggleHypotheses');
+        block.classList.toggle('hidden');
+        btn.textContent = block.classList.contains('hidden') ? 'Afficher les hypothèses détaillées' : 'Masquer les hypothèses détaillées';
+      });
+    }
+
+    function getInputs() {
+      document.querySelectorAll('[data-price-key]').forEach(input => {
+        energies[input.dataset.priceKey].price = parseFloat(input.value) || 0;
+      });
+      return {
+        project: document.getElementById('projectSize').value,
+        duration: parseInt(document.getElementById('duration').value, 10) || 20,
+        carbonStart: parseFloat(document.getElementById('carbonStart').value) || 0,
+        carbonVariation: parseFloat(document.getElementById('carbonVariation').value) || 0,
+        opexInflation: parseFloat(document.getElementById('opexInflation').value) || 0,
+        taxScenario: document.getElementById('taxScenario').value
+      };
+    }
+
+    function calculate() {
+      const inputs = getInputs();
+      const usefulKwh = projectData[inputs.project].usefulKwh;
+      const taxRates = taxScenarioRates[inputs.taxScenario];
+      const rows = [];
+
+      Object.entries(energies).forEach(([key, e]) => {
+        if (!e.available[inputs.project]) return;
+
+        const consumedKwh = usefulKwh / e.efficiency;
+        const quantity = consumedKwh / e.conversionKwhPerUnit;
+        const emissionsT = consumedKwh * e.emission / 1000;
+        const capex = e.capex[inputs.project] || 0;
+        const opexBase = e.opex[inputs.project] || 0;
+        const taxRate = taxRates[e.type];
+
+        let energy20 = 0;
+        let tax20 = 0;
+        let carbon20 = 0;
+        let opex20 = 0;
+        let cumulative = [];
+        let totalCum = capex;
+
+        for (let year = 1; year <= inputs.duration; year++) {
+          const energyPrice = e.price;
+          const taxValue = e.tax.value * Math.pow(1 + taxRate, year - 1);
+          const carbonPrice = inputs.carbonStart + inputs.carbonVariation * (year - 1);
+          const opex = opexBase * Math.pow(1 + inputs.opexInflation, year - 1);
+
+          const energyCost = quantity * energyPrice;
+          const taxCost = quantity * taxValue;
+          const carbonCost = emissionsT * carbonPrice;
+
+          energy20 += energyCost;
+          tax20 += taxCost;
+          carbon20 += carbonCost;
+          opex20 += opex;
+          totalCum += energyCost + taxCost + carbonCost + opex;
+          cumulative.push(totalCum);
+        }
+
+        const total20 = capex + energy20 + tax20 + carbon20 + opex20;
+        const totalUsefulKwh = usefulKwh * inputs.duration;
+
+        rows.push({
+          key, name: e.name, usefulKwh, consumedKwh, quantity, unit: e.unit,
+          price: e.price, priceUnit: e.priceUnit, tax: e.tax.value, taxUnit: e.tax.unit,
+          capex, opexBase, emissionsT, energy20, tax20, carbon20, opex20,
+          firstYear: capex + quantity * e.price + quantity * e.tax.value + emissionsT * inputs.carbonStart + opexBase,
+          total20, costPerKwh: total20 / totalUsefulKwh,
+          exploitationKwh: (energy20 + tax20 + carbon20 + opex20) / totalUsefulKwh,
+          cumulative
+        });
+      });
+
+      rows.sort((a, b) => a.total20 - b.total20);
+      return { rows, inputs, usefulKwh };
+    }
+
+    function calculateAndRender() {
+      const result = calculate();
+      renderSummary(result);
+      renderTable(result);
+      renderCharts(result);
+      renderHypotheses(result);
+    }
+
+    function renderSummary({ rows, inputs, usefulKwh }) {
+      const best = rows[0];
+      const cleanest = [...rows].sort((a, b) => a.emissionsT - b.emissionsT)[0];
+      const container = document.getElementById('summary');
+      container.innerHTML = `
+        <div class="kpi"><div class="label">Besoin utile du projet</div><div class="value">${number(usefulKwh)} kWh/an</div><div class="small">Durée : ${inputs.duration} ans</div></div>
+        <div class="kpi"><div class="label">Énergie la moins chère</div><div class="value">${best.name}</div><div class="small">Budget : ${euro(best.total20)}</div></div>
+        <div class="kpi"><div class="label">Coût complet le plus bas</div><div class="value">${number(best.costPerKwh, 3)} €/kWh</div><div class="small">Sur ${inputs.duration} ans</div></div>
+        <div class="kpi"><div class="label">Énergie la moins émissive</div><div class="value">${cleanest.name}</div><div class="small">${number(cleanest.emissionsT, 1)} tCO₂/an</div></div>
+      `;
+    }
+
+    function renderTable({ rows }) {
+      const table = document.getElementById('resultsTable');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Énergie</th>
+            <th>Coût chantier HT après neutralisation</th>
+            <th>Conso projet</th>
+            <th>Équivalent énergie</th>
+            <th>Prix énergie</th>
+            <th>Taxes</th>
+            <th>OPEX annuel</th>
+            <th>Prix au kWh exploitation 20 ans</th>
+            <th>1ère année avec chantier</th>
+            <th>Budget 20 ans</th>
+            <th>Coût complet kWh 20 ans</th>
+            <th>Rejet CO₂ unitaire</th>
+            <th>Rejet tCO₂/an</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((r, i) => `
+            <tr class="${i === 0 ? 'best' : ''}">
+              <td><strong>${r.name}</strong></td>
+              <td>${euro(r.capex)}</td>
+              <td>${number(r.usefulKwh)} kWh/an</td>
+              <td>${number(r.quantity, 2)} ${r.unit}/an</td>
+              <td>${number(r.price, 3)} ${r.priceUnit}</td>
+              <td>${number(r.tax, 3)} ${r.taxUnit}</td>
+              <td>${euro(r.opexBase)}/an</td>
+              <td>${number(r.exploitationKwh, 3)} €/kWh</td>
+              <td>${euro(r.firstYear)}</td>
+              <td><strong>${euro(r.total20)}</strong></td>
+              <td><strong>${number(r.costPerKwh, 3)} €/kWh</strong></td>
+              <td>${number(energies[r.key].emission, 4)} kgCO₂/kWh</td>
+              <td>${number(r.emissionsT, 1)} tCO₂/an</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+    }
+
+    function renderCharts({ rows, inputs }) {
+      const labels = rows.map(r => r.name);
+      makeChart('budgetChart', 'bar', labels, rows.map(r => Math.round(r.total20)), 'Budget total €');
+      makeChart('co2Chart', 'bar', labels, rows.map(r => Number(r.emissionsT.toFixed(1))), 'tCO₂/an');
+      makeChart('kwhChart', 'bar', labels, rows.map(r => Number(r.costPerKwh.toFixed(3))), '€/kWh utile');
+
+      const years = Array.from({ length: inputs.duration }, (_, i) => `Année ${i + 1}`);
+      makeChart('cumulativeChart', 'line', years, null, 'Coût cumulé €', rows.map(r => ({ label: r.name, data: r.cumulative.map(v => Math.round(v)) })));
+    }
+
+    function makeChart(id, type, labels, data, label, customDatasets = null) {
+      if (charts[id]) charts[id].destroy();
+      const ctx = document.getElementById(id);
+      charts[id] = new Chart(ctx, {
+        type,
+        data: {
+          labels,
+          datasets: customDatasets || [{ label, data }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: type === 'line' } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function renderHypotheses({ inputs }) {
+      const rows = Object.entries(energies).map(([key, e]) => `
+        <tr>
+          <td><strong>${e.name}</strong></td>
+          <td>${e.efficiency}</td>
+          <td>${number(e.conversionKwhPerUnit)} kWh/${e.unit}</td>
+          <td>${number(e.price, 3)} ${e.priceUnit}</td>
+          <td>${number(e.tax.value, 3)} ${e.tax.unit}</td>
+          <td>${number(e.emission, 4)} kgCO₂/kWh</td>
+          <td>${e.type === 'carbon' ? 'Carboné' : 'Non carboné'}</td>
+          <td>${e.available['60'] ? 'Oui' : 'Non'}</td>
+          <td>${e.available['150'] ? 'Oui' : 'Non'}</td>
+          <td>${e.available['350'] ? 'Oui' : 'Non'}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('hypothesesTable').innerHTML = `
+        <thead>
+          <tr>
+            <th>Énergie</th>
+            <th>Rendement / COP</th>
+            <th>Conversion</th>
+            <th>Prix énergie</th>
+            <th>Taxe FY25</th>
+            <th>Facteur émission</th>
+            <th>Type scénario taxe</th>
+            <th>60 MWh</th>
+            <th>150 MWh</th>
+            <th>350 MWh</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      `;
+    }
+
+    init();
+  </script>
+</body>
+</html>
