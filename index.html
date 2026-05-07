@@ -270,24 +270,16 @@
             <option value="30">+30</option>
           </select>
         </div>
-        <div class="field">
-          <label for="opexInflation">Inflation CAPEX/OPEX</label>
-          <select id="opexInflation">
-            <option value="0.01">1 %/an</option>
-            <option value="0.02" selected>2 %/an</option>
-            <option value="0.03">3 %/an</option>
-          </select>
-        </div>
       </div>
 
       <div class="grid grid-2">
         <div class="field">
-          <label for="taxScenario">Taxes sur la consommation</label>
+          <label for="taxScenario">Scénario d'inflation</label>
           <select id="taxScenario">
-            <option value="statusQuo">1 - Statut quo</option>
-            <option value="inflation">2 - Corrélé inflation</option>
-            <option value="carbonPressure">3 - Pression sur carboné</option>
-            <option value="mix" selected>4 - Mix Inflation / Carboné</option>
+            <option value="statusQuo">1 - Statut quo (0%)</option>
+            <option value="inflation">2 - Corrélé inflation (1%)</option>
+            <option value="carbonPressure">3 - Pression sur Carboné - Fossile (5%) - Autre (0%)</option>
+            <option value="mix" selected>4 - Mix Inflation / Carboné - Fossile (5%) - Autre (1%)</option>
           </select>
         </div>
         <div class="field">
@@ -353,7 +345,7 @@
       fioul: {
         name: "Fioul domestique", unit: "L", priceUnit: "€/L", price: 0.930,
         efficiency: 0.90, conversionKwhPerUnit: 10, emission: 0.314,
-        tax: { unit: "€/L", value: 0.164 }, type: "carbon",
+        tax: { unit: "€/L", value: 0.164 }, type: "carbon", carbonTaxed: true,
         capex: { "60": 12754, "150": 46983, "350": 56380 },
         opex: { "60": 300, "150": 1285, "350": 2825 },
         available: { "60": true, "150": true, "350": true }
@@ -369,7 +361,7 @@
       biogpl: {
         name: "BioGPL", unit: "t", priceUnit: "€/t", price: 1650,
         efficiency: 1.06, conversionKwhPerUnit: 13800, emission: 0.0702,
-        tax: { unit: "€/t", value: 76 }, type: "nonCarbon",
+        tax: { unit: "€/t", value: 76 }, type: "nonCarbon", carbonTaxed: false,
         capex: { "60": 11402, "150": 60319, "350": 54321 },
         opex: { "60": 325, "150": 1310, "350": 2850 },
         available: { "60": true, "150": true, "350": true }
@@ -377,7 +369,7 @@
       pac: {
         name: "Électricité PAC", unit: "MWh", priceUnit: "€/MWh", price: 176,
         efficiency: 2.5, conversionKwhPerUnit: 1000, emission: 0.079,
-        tax: { unit: "€/MWh", value: 26.58 }, type: "nonCarbon",
+        tax: { unit: "€/MWh", value: 26.58 }, type: "nonCarbon", carbonTaxed: false,
         capex: { "60": 33850, "150": 115014, "350": 184890 },
         opex: { "60": 628, "150": 5649, "350": 7289 },
         available: { "60": true, "150": true, "350": true }
@@ -385,7 +377,7 @@
       biomasse: {
         name: "Biomasse granulés", unit: "t", priceUnit: "€/t", price: 308,
         efficiency: 0.90, conversionKwhPerUnit: 4600, emission: 0.027,
-        tax: { unit: "€/t", value: 0 }, type: "nonCarbon",
+        tax: { unit: "€/t", value: 0 }, type: "nonCarbon", carbonTaxed: false,
         capex: { "60": 26296, "150": 160468, "350": 319926 },
         opex: { "60": 388, "150": 3120, "350": 9020 },
         available: { "60": true, "150": true, "350": true }
@@ -393,7 +385,7 @@
       geothermie: {
         name: "Géothermie - élec", unit: "MWh", priceUnit: "€/MWh", price: 176,
         efficiency: 3.5, conversionKwhPerUnit: 1000, emission: 0.079,
-        tax: { unit: "€/MWh", value: 33.70 }, type: "nonCarbon",
+        tax: { unit: "€/MWh", value: 33.70 }, type: "nonCarbon", carbonTaxed: false,
         capex: { "60": 46610, "150": null, "350": null },
         opex: { "60": 607, "150": null, "350": null },
         available: { "60": true, "150": false, "350": false }
@@ -465,7 +457,6 @@
         Object.values(energies).forEach(e => e.price = e.defaultPrice || e.price);
         document.getElementById('carbonStart').value = 72;
         document.getElementById('carbonVariation').value = 0;
-        document.getElementById('opexInflation').value = 0.02;
         document.getElementById('taxScenario').value = 'mix';
         renderEnergyPriceInputs();
         bindEvents();
@@ -489,7 +480,6 @@
         duration: parseInt(document.getElementById('duration').value, 10) || 20,
         carbonStart: parseFloat(document.getElementById('carbonStart').value) || 0,
         carbonVariation: parseFloat(document.getElementById('carbonVariation').value) || 0,
-        opexInflation: parseFloat(document.getElementById('opexInflation').value) || 0,
         taxScenario: document.getElementById('taxScenario').value
       };
     }
@@ -521,11 +511,11 @@
           const energyPrice = e.price;
           const taxValue = e.tax.value * Math.pow(1 + taxRate, year - 1);
           const carbonPrice = inputs.carbonStart + inputs.carbonVariation * (year - 1);
-          const opex = opexBase * Math.pow(1 + inputs.opexInflation, year - 1);
+          const opex = opexBase;
 
           const energyCost = quantity * energyPrice;
           const taxCost = quantity * taxValue;
-          const carbonCost = emissionsT * carbonPrice;
+          const carbonCost = e.carbonTaxed ? emissionsT * carbonPrice : 0;
 
           energy20 += energyCost;
           tax20 += taxCost;
@@ -683,7 +673,7 @@
           <td>${number(e.price, 3)} ${e.priceUnit}</td>
           <td>${number(e.tax.value, 3)} ${e.tax.unit}</td>
           <td>${number(e.emission, 4)} kgCO₂/kWh</td>
-          <td>${e.type === 'carbon' ? 'Carboné' : 'Non carboné'}</td>
+          <td>${e.carbonTaxed ? 'Oui' : 'Non'}</td>
           <td>${e.available['60'] ? 'Oui' : 'Non'}</td>
           <td>${e.available['150'] ? 'Oui' : 'Non'}</td>
           <td>${e.available['350'] ? 'Oui' : 'Non'}</td>
@@ -699,7 +689,7 @@
             <th>Prix énergie</th>
             <th>Taxe FY25</th>
             <th>Facteur émission</th>
-            <th>Type scénario taxe</th>
+            <th>Soumis au prix carbone EU ETS</th>
             <th>60 MWh</th>
             <th>150 MWh</th>
             <th>350 MWh</th>
