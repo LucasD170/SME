@@ -350,10 +350,7 @@
         opex: { "60": 300, "150": 1285, "350": 2825 },
         available: { "60": true, "150": true, "350": true }
       },
-      gpl: {
-        name: "GPL", unit: "t", priceUnit: "€/t", price: 900,
-        efficiency: 1.06, conversionKwhPerUnit: 13800, emission: 0.270,
-        tax: { unit: "€/t", value: 76 }, type: "carbon",
+      gpl: {$1type: "carbon", carbonTaxed: true,
         capex: { "60": 11402, "150": 60319, "350": 54321 },
         opex: { "60": 325, "150": 1310, "350": 2850 },
         available: { "60": true, "150": true, "350": true }
