@@ -608,22 +608,37 @@
 
     function renderCharts({ rows, inputs }) {
       const labels = rows.map(r => r.name);
-      makeChart('budgetChart', 'bar', labels, rows.map(r => Math.round(r.total20)), 'Budget total €');
-      makeChart('co2Chart', 'bar', labels, rows.map(r => Number(r.emissionsT.toFixed(1))), 'tCO₂/an');
-      makeChart('kwhChart', 'bar', labels, rows.map(r => Number(r.costPerKwh.toFixed(3))), '€/kWh utile');
+      const colors = rows.map(r => energyColors[r.key]);
+
+      makeChart('budgetChart', 'bar', labels, rows.map(r => Math.round(r.total20)), 'Budget total €', null, colors);
+      makeChart('co2Chart', 'bar', labels, rows.map(r => Number(r.emissionsT.toFixed(1))), 'tCO₂/an', null, colors);
+      makeChart('kwhChart', 'bar', labels, rows.map(r => Number(r.costPerKwh.toFixed(3))), '€/kWh utile', null, colors);
 
       const years = Array.from({ length: inputs.duration }, (_, i) => `Année ${i + 1}`);
-      makeChart('cumulativeChart', 'line', years, null, 'Coût cumulé €', rows.map(r => ({ label: r.name, data: r.cumulative.map(v => Math.round(v)) })));
+      makeChart('cumulativeChart', 'line', years, null, 'Coût cumulé €', rows.map(r => ({
+        label: r.name,
+        data: r.cumulative.map(v => Math.round(v)),
+        borderColor: energyColors[r.key],
+        backgroundColor: energyColors[r.key],
+        tension: 0.25,
+        pointRadius: 2
+      })));
     }
 
-    function makeChart(id, type, labels, data, label, customDatasets = null) {
+    function makeChart(id, type, labels, data, label, customDatasets = null, colors = null) {
       if (charts[id]) charts[id].destroy();
       const ctx = document.getElementById(id);
       charts[id] = new Chart(ctx, {
         type,
         data: {
           labels,
-          datasets: customDatasets || [{ label, data }]
+          datasets: customDatasets || [{
+            label,
+            data,
+            backgroundColor: colors,
+            borderColor: colors,
+            borderWidth: 1
+          }]
         },
         options: {
           responsive: true,
