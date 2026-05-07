@@ -290,6 +290,21 @@
 
       <h3>Prix des énergies</h3>
       <div class="energy-prices" id="energyPrices"></div>
+      <h3>CEE / Subventions</h3>
+      <div class="energy-prices">
+        <div class="field">
+          <label>CEE / Subventions Électricité PAC — €</label>
+          <input id="subsidyPac" type="number" step="100" />
+        </div>
+        <div class="field">
+          <label>CEE / Subventions Biomasse granulés — €</label>
+          <input id="subsidyBiomasse" type="number" step="100" />
+        </div>
+        <div class="field">
+          <label>CEE / Subventions Géothermie - élec — €</label>
+          <input id="subsidyGeothermie" type="number" step="100" />
+        </div>
+      </div>
       <button id="resetBtn" class="secondary">Réinitialiser les valeurs</button>
     </section>
 
@@ -341,6 +356,12 @@
       "350": { label: "Projet 350 MWh", usefulKwh: 350000 }
     };
 
+    const subsidiesByProject = {
+      "60": { pac: -6000, biomasse: 0, geothermie: -6000 },
+      "150": { pac: -10000, biomasse: 0, geothermie: 0 },
+      "350": { pac: -20000, biomasse: 0, geothermie: 0 }
+    };
+
     const energies = {
       fioul: {
         name: "Fioul domestique", unit: "L", priceUnit: "€/L", price: 0.930,
@@ -370,7 +391,7 @@
         name: "Électricité PAC", unit: "MWh", priceUnit: "€/MWh", price: 176,
         efficiency: 2.5, conversionKwhPerUnit: 1000, emission: 0.079,
         tax: { unit: "€/MWh", value: 26.58 }, type: "nonCarbon", carbonTaxed: false,
-        capex: { "60": 33850, "150": 115014, "350": 184890 },
+        capex: { "60": 39850, "150": 125014, "350": 204890 },
         opex: { "60": 628, "150": 5649, "350": 7289 },
         available: { "60": true, "150": true, "350": true }
       },
@@ -386,7 +407,7 @@
         name: "Géothermie - élec", unit: "MWh", priceUnit: "€/MWh", price: 176,
         efficiency: 3.5, conversionKwhPerUnit: 1000, emission: 0.079,
         tax: { unit: "€/MWh", value: 33.70 }, type: "nonCarbon", carbonTaxed: false,
-        capex: { "60": 46610, "150": null, "350": null },
+        capex: { "60": 52610, "150": null, "350": null },
         opex: { "60": 607, "150": null, "350": null },
         available: { "60": true, "150": false, "350": false }
       }
