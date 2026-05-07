@@ -357,9 +357,9 @@
     };
 
     const subsidiesByProject = {
-      "60": { pac: -6000, biomasse: 0, geothermie: -6000 },
-      "150": { pac: -10000, biomasse: 0, geothermie: 0 },
-      "350": { pac: -20000, biomasse: 0, geothermie: 0 }
+      "60": { pac: 6000, biomasse: 0, geothermie: 6000 },
+      "150": { pac: 10000, biomasse: 0, geothermie: 0 },
+      "350": { pac: 20000, biomasse: 0, geothermie: 0 }
     };
 
     const energies = {
@@ -448,10 +448,19 @@
         projectSelect.appendChild(option);
       });
       projectSelect.value = "350";
+      updateSubsidyInputs();
 
       renderEnergyPriceInputs();
       bindEvents();
       calculateAndRender();
+    }
+
+    function updateSubsidyInputs() {
+      const project = document.getElementById('projectSize').value;
+      const defaults = subsidiesByProject[project];
+      document.getElementById('subsidyPac').value = defaults.pac;
+      document.getElementById('subsidyBiomasse').value = defaults.biomasse;
+      document.getElementById('subsidyGeothermie').value = defaults.geothermie;
     }
 
     function renderEnergyPriceInputs() {
@@ -474,11 +483,17 @@
         el.addEventListener('change', calculateAndRender);
       });
 
+      document.getElementById('projectSize').addEventListener('change', () => {
+        updateSubsidyInputs();
+        calculateAndRender();
+      });
+
       document.getElementById('resetBtn').addEventListener('click', () => {
         Object.values(energies).forEach(e => e.price = e.defaultPrice || e.price);
         document.getElementById('carbonStart').value = 72;
         document.getElementById('carbonVariation').value = 0;
         document.getElementById('taxScenario').value = 'mix';
+        updateSubsidyInputs();
         renderEnergyPriceInputs();
         bindEvents();
         calculateAndRender();
@@ -501,7 +516,12 @@
         duration: parseInt(document.getElementById('duration').value, 10) || 20,
         carbonStart: parseFloat(document.getElementById('carbonStart').value) || 0,
         carbonVariation: parseFloat(document.getElementById('carbonVariation').value) || 0,
-        taxScenario: document.getElementById('taxScenario').value
+        taxScenario: document.getElementById('taxScenario').value,
+        subsidies: {
+          pac: parseFloat(document.getElementById('subsidyPac').value) || 0,
+          biomasse: parseFloat(document.getElementById('subsidyBiomasse').value) || 0,
+          geothermie: parseFloat(document.getElementById('subsidyGeothermie').value) || 0
+        }
       };
     }
 
@@ -518,6 +538,8 @@
         const quantity = consumedKwh / e.conversionKwhPerUnit;
         const emissionsT = consumedKwh * e.emission / 1000;
         const capex = e.capex[inputs.project] || 0;
+        const subsidy = inputs.subsidies[key] || 0;
+        const investmentNet = capex - subsidy;
         const opexBase = e.opex[inputs.project] || 0;
         const taxRate = taxRates[e.type];
 
@@ -526,7 +548,7 @@
         let carbon20 = 0;
         let opex20 = 0;
         let cumulative = [];
-        let totalCum = capex;
+        let totalCum = investmentNet;
 
         for (let year = 1; year <= inputs.duration; year++) {
           const energyPrice = e.price;
@@ -546,14 +568,14 @@
           cumulative.push(totalCum);
         }
 
-        const total20 = capex + energy20 + tax20 + carbon20 + opex20;
+        const total20 = investmentNet + energy20 + tax20 + carbon20 + opex20;
         const totalUsefulKwh = usefulKwh * inputs.duration;
 
         rows.push({
           key, name: e.name, usefulKwh, consumedKwh, quantity, unit: e.unit,
           price: e.price, priceUnit: e.priceUnit, tax: e.tax.value, taxUnit: e.tax.unit,
-          capex, opexBase, emissionsT, energy20, tax20, carbon20, opex20,
-          firstYear: capex + quantity * e.price + quantity * e.tax.value + emissionsT * inputs.carbonStart + opexBase,
+          capex, subsidy, investmentNet, opexBase, emissionsT, energy20, tax20, carbon20, opex20,
+          firstYear: investmentNet + quantity * e.price + quantity * e.tax.value + (e.carbonTaxed ? emissionsT * inputs.carbonStart : 0) + opexBase,
           total20, costPerKwh: total20 / totalUsefulKwh,
           exploitationKwh: (energy20 + tax20 + carbon20 + opex20) / totalUsefulKwh,
           cumulative
@@ -591,6 +613,7 @@
           <tr>
             <th>Énergie</th>
             <th>Coût de chantier HTVA</th>
+            <th>CEE / Subventions</th>
             <th>OPEX annuel HTVA</th>
             <th>Équivalent énergie</th>
             <th>Prix carbone EU ETS</th>
@@ -607,6 +630,7 @@
             <tr class="${i === 0 ? 'best' : ''}">
               <td><strong>${r.name}</strong></td>
               <td>${euro(r.capex)}</td>
+              <td>- ${euro(r.subsidy)}</td>
               <td>${euro(r.opexBase)}/an</td>
               <td>${number(r.quantity, 2)} ${r.unit}/an</td>
               <td>${euro(r.carbon20)}</td>
