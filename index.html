@@ -407,6 +407,15 @@
       mix: { carbon: 0.05, nonCarbon: 0.01 }
     };
 
+    const energyColors = {
+      fioul: "#6b7280",
+      gpl: "#ef4444",
+      biogpl: "#f97316",
+      pac: "#3b82f6",
+      biomasse: "#22c55e",
+      geothermie: "#14b8a6"
+    };
+
     let charts = {};
 
     function euro(value) {
@@ -610,9 +619,29 @@
       const labels = rows.map(r => r.name);
       const colors = rows.map(r => energyColors[r.key]);
 
-      makeChart('budgetChart', 'bar', labels, rows.map(r => Math.round(r.total20)), 'Budget total €', null, colors);
-      makeChart('co2Chart', 'bar', labels, rows.map(r => Number(r.emissionsT.toFixed(1))), 'tCO₂/an', null, colors);
-      makeChart('kwhChart', 'bar', labels, rows.map(r => Number(r.costPerKwh.toFixed(3))), '€/kWh utile', null, colors);
+      makeChart('budgetChart', 'bar', labels, null, 'Budget total €', [{
+        label: 'Budget total €',
+        data: rows.map(r => Math.round(r.total20)),
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1
+      }]);
+
+      makeChart('co2Chart', 'bar', labels, null, 'tCO₂/an', [{
+        label: 'tCO₂/an',
+        data: rows.map(r => Number(r.emissionsT.toFixed(1))),
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1
+      }]);
+
+      makeChart('kwhChart', 'bar', labels, null, '€/kWh utile', [{
+        label: '€/kWh utile',
+        data: rows.map(r => Number(r.costPerKwh.toFixed(3))),
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1
+      }]);
 
       const years = Array.from({ length: inputs.duration }, (_, i) => `Année ${i + 1}`);
       makeChart('cumulativeChart', 'line', years, null, 'Coût cumulé €', rows.map(r => ({
